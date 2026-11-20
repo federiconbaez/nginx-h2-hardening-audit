@@ -1,0 +1,3 @@
+/nginx-h2-audit
+*.out
+coverage.*

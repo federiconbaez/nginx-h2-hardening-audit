@@ -1,0 +1,47 @@
+version: "2"
+linters:
+  default: standard
+  enable:
+    - depguard
+    - errorlint
+    - gosec
+    - revive
+  settings:
+    depguard:
+      rules:
+        domain-pure:
+          files:
+            - "**/internal/domain/*.go"
+            - "!$test"
+          deny:
+            - pkg: os
+              desc: domain must not do I/O
+            - pkg: net
+              desc: no network
+            - pkg: io/fs
+              desc: domain must not do I/O
+            - pkg: path/filepath
+              desc: domain must not touch the filesystem
+            - pkg: github.com/federiconbaez/nginx-h2-hardening-audit/internal
+              desc: domain must not depend on other layers
+        no-network:
+          deny:
+            - pkg: net
+              desc: this tool never uses the network
+            - pkg: os/exec
+              desc: this tool never executes programs
+    gosec:
+      excludes:
+        - G304 # reading user-supplied files is the purpose of the adapters
+        - G306 # test fixtures
+    staticcheck:
+      checks: ["all", "-QF1002", "-ST1000", "-ST1003"]
+    revive:
+      rules:
+        - name: exported
+  exclusions:
+    presets:
+      - std-error-handling
+formatters:
+  enable:
+    - gofmt

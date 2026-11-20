@@ -1,0 +1,20 @@
+nginx version evaluated: 1.30.6 (installed)
+config: http2 enabled at 1 place(s), proxy/grpc_pass at 1, worker_connections 256
+warning: nginx.conf:10: include "/usr/share/nginx/modules-extra.conf" outside config root, skipped
+
+[CRITICAL] VULNERABLE-VERSION: CVE-2026-123007: Memory corruption in HTTP/2 flow control (nginx.org: major, CVSSv4 9.2, CWE-191)
+  evidence: installed version 1.30.6 (stable branch) in vulnerable range 1.9.5-1.31.8
+  evidence: conf.d/mcp.conf:3 listen 443 ssl http2
+  mitigation: upgrade to 1.30.7 (stable branch), then full restart (`sudo systemctl restart nginx`, not reload) and verify with `nginx -v`. If you cannot upgrade now: `http2 off;` and remove `http2` from `listen` lines, then reload. Advisory: https://my.f5.com/manage/s/article/K000163926
+
+[CRITICAL] VULNERABLE-VERSION: CVE-2026-123633: Use-after-free in HTTP/2 (nginx.org: medium, CVSSv4 9.2, CWE-416)
+  evidence: installed version 1.30.6 (stable branch) in vulnerable range 1.19.7-1.31.8
+  evidence: conf.d/mcp.conf:3 listen 443 ssl http2
+  evidence: conf.d/mcp.conf:6 proxy_pass
+  evidence: nginx.conf:5 worker_connections 256 (threshold 1024)
+  mitigation: upgrade to 1.30.7 (stable branch), then full restart (`sudo systemctl restart nginx`, not reload) and verify with `nginx -v`. If you cannot upgrade now: `http2 off;` and remove `http2` from `listen` lines, then reload. Advisory: https://my.f5.com/manage/s/article/K000163928
+
+[MEDIUM] LOW-WORKER-CONNECTIONS: HTTP/2 + proxy with low worker_connections (precondition of CVE-2026-123633)
+  evidence: nginx.conf:5 worker_connections 256 < threshold 1024
+  evidence: conf.d/mcp.conf:6 proxy_pass
+  mitigation: upgrade is the fix; raising worker_connections (and worker_rlimit_nofile) only reduces exposure. Threshold is a heuristic (-wc-threshold).
