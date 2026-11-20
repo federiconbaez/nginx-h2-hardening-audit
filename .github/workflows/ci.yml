@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: go vet
+        run: go vet ./...
+      - name: staticcheck
+        run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+      - name: test (race)
+        run: go test -race -count=1 ./...
+      - name: domain coverage
+        run: |
+          go test -count=1 -coverprofile=domain.out ./internal/domain/
+          go tool cover -func=domain.out | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: fuzz (short)
+        run: |
+          go test -run='^$' -fuzz=FuzzParseConfig -fuzztime=20s ./internal/domain/
+          go test -run='^$' -fuzz=FuzzParseVersion -fuzztime=10s ./internal/domain/
+      - name: build
+        run: go build -o nginx-h2-audit ./cmd/nginx-h2-audit
+      - name: gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar xz gitleaks
+          ./gitleaks git . --no-banner --redact
