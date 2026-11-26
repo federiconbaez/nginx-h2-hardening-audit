@@ -51,8 +51,11 @@ actualizar + **reinicio completo** (no reload); si no se puede, `http2 off;`.
 go install github.com/federiconbaez/nginx-h2-hardening-audit/cmd/nginx-h2-audit@latest
 
 # en el servidor (solo lectura):
-nginx -V 2>&1 > nginx-V.txt
+nginx -V > nginx-V.txt 2>&1
 nginx-h2-audit -nginx-v nginx-V.txt -config-root /etc/nginx
+
+# o por stdin, sin archivo intermedio:
+nginx -V 2>&1 | nginx-h2-audit -nginx-v - -config-root /etc/nginx
 
 # o sobre una copia, con la versión que responde el servidor:
 nginx-h2-audit -nginx-v nginx-V.txt -config-root ./nginx-snapshot \
