@@ -40,6 +40,12 @@ jobs:
           go test -run='^$' -fuzz=FuzzParseVersion -fuzztime=10s ./internal/domain/
       - name: build
         run: go build -o nginx-h2-audit ./cmd/nginx-h2-audit
+      - name: docs redirect guard
+        run: |
+          if grep -R -n -F --include='*.md' '2>&1 >' .; then
+            echo "incorrect nginx -V redirect: use '> file 2>&1' or '2>&1 |'" >&2
+            exit 1
+          fi
       - name: gitleaks
         run: |
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar xz gitleaks
